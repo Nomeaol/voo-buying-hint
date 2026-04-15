@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VOO Buying Hint — Capital Allocation Planner</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>VOO Buying Hint</h1>
+      <p>Capital Allocation Planner for Vanguard S&amp;P 500 ETF</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Step 1: Capital Input -->
+    <section class="card" id="capital-section">
+      <h2>1. Your Investment Capital</h2>
+      <div class="form-group">
+        <label for="total-capital">Total Capital to Invest ($)</label>
+        <input type="number" id="total-capital" placeholder="e.g. 50000" min="1" step="100">
+      </div>
+      <div class="form-group">
+        <label for="voo-price">Current VOO Price ($)</label>
+        <div class="input-with-btn">
+          <input type="number" id="voo-price" placeholder="Fetching..." min="1" step="0.01" readonly>
+          <button id="fetch-price-btn" class="fetch-btn">Refresh Price</button>
+        </div>
+        <span id="fetch-status" class="fetch-status"></span>
+      </div>
+
+      <!-- 52-Week Price Chart -->
+      <div class="chart-container" id="weekly-chart-container">
+        <div class="chart-header">
+          <h3>VOO — 52 Week Price History</h3>
+          <div class="chart-legend" id="chart-legend"></div>
+        </div>
+        <div class="chart-loading" id="chart-loading">Loading 52-week data...</div>
+        <canvas id="weekly-chart" height="260"></canvas>
+      </div>
+      <div class="form-group">
+        <label for="reserve-pct">Cash Reserve % (emergency fund)</label>
+        <input type="range" id="reserve-pct" min="0" max="50" value="10">
+        <span id="reserve-label">10%</span>
+      </div>
+      <div class="summary-box" id="capital-summary" style="display:none;">
+        <div class="summary-row">
+          <span>Investable Amount</span>
+          <span id="investable-amount">—</span>
+        </div>
+        <div class="summary-row">
+          <span>Cash Reserve</span>
+          <span id="cash-reserve">—</span>
+        </div>
+        <div class="summary-row">
+          <span>Approx. Shares (lump sum)</span>
+          <span id="approx-shares">—</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 2: Strategy -->
+    <section class="card" id="strategy-section">
+      <h2>2. Investment Strategy</h2>
+      <div class="strategy-toggle">
+        <button class="strategy-btn active" data-strategy="dca">Dollar-Cost Averaging</button>
+        <button class="strategy-btn" data-strategy="lump">Lump Sum</button>
+        <button class="strategy-btn" data-strategy="hybrid">Hybrid</button>
+      </div>
+
+      <div id="dca-options" class="strategy-options">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="dca-frequency">Frequency</label>
+            <select id="dca-frequency">
+              <option value="weekly">Weekly</option>
+              <option value="biweekly">Bi-weekly</option>
+              <option value="monthly" selected>Monthly</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="dca-duration">Duration (months)</label>
+            <input type="number" id="dca-duration" value="12" min="1" max="60">
+          </div>
+        </div>
+        <p class="hint">DCA spreads your investment over time, reducing the risk of buying at a peak.</p>
+      </div>
+
+      <div id="lump-options" class="strategy-options" style="display:none;">
+        <p class="hint">Lump sum invests all capital at once. Historically, lump sum beats DCA ~68% of the time over 12-month periods because markets tend to go up.</p>
+      </div>
+
+      <div id="hybrid-options" class="strategy-options" style="display:none;">
+        <div class="form-group">
+          <label for="hybrid-initial">Initial Lump Sum %</label>
+          <input type="range" id="hybrid-initial" min="10" max="90" value="50">
+          <span id="hybrid-label">50%</span>
+        </div>
+        <p class="hint">Invest a portion now and DCA the rest. A balanced approach.</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="hybrid-frequency">DCA Frequency</label>
+            <select id="hybrid-frequency">
+              <option value="weekly">Weekly</option>
+              <option value="biweekly">Bi-weekly</option>
+              <option value="monthly" selected>Monthly</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="hybrid-duration">DCA Duration (months)</label>
+            <input type="number" id="hybrid-duration" value="6" min="1" max="60">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3: Schedule -->
+    <section class="card" id="schedule-section" style="display:none;">
+      <h2>3. Your Investment Schedule</h2>
+      <div class="schedule-header">
+        <div class="schedule-stats" id="schedule-stats"></div>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progress-bar"></div>
+        <span class="progress-label" id="progress-label">0%</span>
+      </div>
+      <div class="table-wrapper">
+        <table id="schedule-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Est. Shares</th>
+              <th>Cumulative</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="schedule-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Step 4: Projection -->
+    <section class="card" id="projection-section" style="display:none;">
+      <h2>4. Growth Projection</h2>
+      <div class="form-group">
+        <label for="annual-return">Expected Annual Return (%)</label>
+        <input type="range" id="annual-return" min="1" max="20" value="10">
+        <span id="return-label">10%</span>
+      </div>
+      <div class="form-group">
+        <label for="projection-years">Projection Period (years)</label>
+        <input type="range" id="projection-years" min="1" max="30" value="10">
+        <span id="years-label">10 years</span>
+      </div>
+      <div class="projection-grid" id="projection-grid"></div>
+      <canvas id="projection-chart" height="300"></canvas>
+    </section>
+
+    <!-- Generate Button -->
+    <div class="action-bar">
+      <button id="generate-btn" class="primary-btn">Generate My Plan</button>
+      <button id="reset-btn" class="secondary-btn">Reset</button>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>VOO Buying Hint &mdash; For educational purposes only. Not financial advice.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
